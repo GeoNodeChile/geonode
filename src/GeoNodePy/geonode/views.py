@@ -7,6 +7,8 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 import json
+
+#charge the index from this import
 from geonode.maps.views import index
 
 #def index(request): 
