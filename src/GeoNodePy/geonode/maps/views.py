@@ -1780,6 +1780,7 @@ def index(request):
             config['fromLayer'] = True
         else:
             config = DEFAULT_MAP_CONFIG
+            config['fromLayer'] = True
     return render_to_response('maps/index.html', RequestContext(request, {
         'config': json.dumps(config), 
         'GOOGLE_API_KEY' : settings.GOOGLE_API_KEY,
