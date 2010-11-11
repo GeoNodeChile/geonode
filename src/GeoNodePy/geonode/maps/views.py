@@ -1696,3 +1696,93 @@ def maps_search_page(request):
         'init_search': json.dumps(params or {}),
          "site" : settings.SITEURL
     }))
+
+
+@csrf_exempt            
+def index(request):
+    '''
+    View that creates a new map.  
+    
+    If the query argument 'copy' is given, the inital map is
+    a copy of the map with the id specified, otherwise the 
+    default map configuration is used.  If copy is specified
+    and the map specified does not exist a 404 is returned.
+    '''
+    if request.method == 'GET' and 'copy' in request.GET:
+        mapid = request.GET['copy']
+        map = get_object_or_404(Map,pk=mapid)
+        
+        if not request.user.has_perm('maps.view_map', obj=map):
+            return HttpResponse(loader.render_to_string('401.html', 
+                RequestContext(request, {'error_message': 
+                    _("You are not permitted to view or copy this map.")})), status=401)
+
+        map.abstract = DEFAULT_ABSTRACT
+        map.title = DEFAULT_TITLE
+        if request.user.is_authenticated(): map.owner = request.user
+        config = map.viewer_json()
+        del config['id']
+    else:
+        if request.method == 'GET':
+            params = request.GET
+        elif request.method == 'POST':
+            params = request.POST
+        else:
+            return HttpResponse(status=405)
+        
+        if 'layer' in params:
+            bbox = None
+            map = Map(projection="EPSG:900913")
+            layers = []
+            for layer_name in params.getlist('layer'):
+                try:
+                    layer = Layer.objects.get(typename=layer_name)
+                except ObjectDoesNotExist:
+                    # bad layer, skip 
+                    continue
+
+                if not request.user.has_perm('maps.view_layer', obj=layer):
+                    # invisible layer, skip inclusion
+                    continue
+                    
+                layer_bbox = layer.resource.latlon_bbox
+                if bbox is None:
+                    bbox = list(layer_bbox[0:4])
+                else:
+                    bbox[0] = min(bbox[0], layer_bbox[0])
+                    bbox[1] = max(bbox[1], layer_bbox[1])
+                    bbox[2] = min(bbox[2], layer_bbox[2])
+                    bbox[3] = max(bbox[3], layer_bbox[3])
+                
+                layers.append(MapLayer(
+                    map = map,
+                    name = layer.typename,
+                    ows_url = settings.GEOSERVER_BASE_URL + "wms",
+                    visibility = True
+                ))
+
+            if bbox is not None:
+                minx, maxx, miny, maxy = [float(c) for c in bbox]
+                x = (minx + maxx) / 2
+                y = (miny + maxy) / 2
+                wkt = "POINT(" + str(x) + " " + str(y) + ")"
+                center = GEOSGeometry(wkt, srid=4326)
+                center.transform("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext +no_defs")
+
+                width_zoom = math.log(360 / (maxx - minx), 2)
+                height_zoom = math.log(360 / (maxy - miny), 2)
+
+                map.center_x = center.x
+                map.center_y = center.y
+                map.zoom = math.ceil(min(width_zoom, height_zoom))
+
+            config = map.viewer_json(*(DEFAULT_BASELAYERS + layers))
+            config['fromLayer'] = True
+        else:
+            config = DEFAULT_MAP_CONFIG
+    return render_to_response('maps/index.html', RequestContext(request, {
+        'config': json.dumps(config), 
+        'GOOGLE_API_KEY' : settings.GOOGLE_API_KEY,
+        'GEOSERVER_BASE_URL' : settings.GEOSERVER_BASE_URL
+    }))
+

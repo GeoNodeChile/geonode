@@ -13,7 +13,8 @@ js_info_dict = {
 urlpatterns = patterns('',
     # Example:
     # (r'^geonode/', include('geonode.foo.urls')),
-    (r'^(?:index/?)?$', 'geonode.views.index'),
+    #(r'^(?:index/?)?$', 'geonode.views.index'),
+    (r'^(?:index/?)?$', 'geonode.maps.views.index'),
     (r'^(?P<page>developer|help)/?$', 'geonode.views.static'),
     (r'^lang\.js$', 'geonode.views.lang'),
     (r'^maps/', include('geonode.maps.urls')),
