@@ -50,14 +50,14 @@ USE_I18N = True
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
-MEDIA_ROOT = ''
+MEDIA_ROOT = path_extrapolate('geonode/uploaded')
 
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = 'http://localhost:8001/geoserver/www/'
+MEDIA_URL = '/uploaded/'
 
-GEONODE_UPLOAD_PATH = path_extrapolate('../../gs-data/www')
+GEONODE_UPLOAD_PATH = MEDIA_ROOT
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
@@ -158,24 +158,26 @@ MAP_BASELAYERS = [{
     "visibility": True,
     "fixed": False,
     "group":"background"
-  },{
-    "source":"any",
-    "type":"OpenLayers.Layer.WMS",
-    "group":"background",
-    "visibility": False,
-    "fixed": True,
-    "args":[
-      "bluemarble",
-      "http://maps.opengeo.org/geowebcache/service/wms",
-      {
-        "layers":["bluemarble"],
-        "format":"image/png",
-        "tiled": True,
-        "tilesOrigin":[-20037508.34,-20037508.34]
-      },
-      {"buffer":0}
-    ]
-  },{
+  },
+#{
+ #   "source":"any",
+#    "type":"OpenLayers.Layer.WMS",
+#    "group":"background",
+#    "visibility": False,
+#    "fixed": True,
+#    "args":[
+#      "bluemarble",
+#      "http://maps.opengeo.org/geowebcache/service/wms",
+#      {
+ #       "layers":["bluemarble"],
+#        "format":"image/png",
+#        "tiled": True,
+#        "tilesOrigin":[-20037508.34,-20037508.34]
+#      },
+#      {"buffer":0}
+#    ]
+#  }
+{
     "source":"google",
     "group":"background",
     "name":"HYBRID",
@@ -234,6 +236,9 @@ INSTALLED_APPS = (
     'geonode.core',
     'geonode.maps',
     'geonode.proxy',
+    'files',
+    'uni_form',
+    'sorl.thumbnail',
 )
 
 AUTH_PROFILE_MODULE = 'maps.Contact'

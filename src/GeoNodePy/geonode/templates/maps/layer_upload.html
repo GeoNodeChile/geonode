@@ -115,6 +115,7 @@ Ext.onReady(function(){
                         url: form_target,
                         waitMsg: gettext('Uploading your data...'),
                         success: function(fp, o) {
+				alert(o.result.redirect_to)
                             document.location = o.result.redirect_to;
                         },
                         failure: function(fp, o) {
